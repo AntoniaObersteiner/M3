@@ -1,0 +1,11 @@
+if [ -v NIX_STORE ]; then
+	export M3_TARGET="gem5";
+	export M3_ISA="x86_64";
+	export M3_BUILD="release";
+	./b $@
+else
+	echo "please first enter a nix shell:";
+	echo "nix --extra-experimental-features 'nix-command flakes' develop";
+	echo "and consider the steps and fixes in";
+	echo "https://gitlab.hrz.tu-chemnitz.de/anob943c-at-tu-dresden.de/m3rit/-/blob/master/m3/install.sh"
+fi
