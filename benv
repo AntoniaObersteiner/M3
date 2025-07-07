@@ -6,6 +6,6 @@ if [ -v NIX_STORE ]; then
 else
 	echo "please first enter a nix shell:";
 	echo "nix --extra-experimental-features 'nix-command flakes' develop";
-	echo "and consider the steps and fixes in";
+	echo "or just ./bnix and consider the steps and fixes in";
 	echo "https://gitlab.hrz.tu-chemnitz.de/anob943c-at-tu-dresden.de/m3rit/-/blob/master/m3/install.sh"
 fi
