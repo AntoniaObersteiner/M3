@@ -2,7 +2,11 @@ if [ -v NIX_STORE ]; then
 	export M3_TARGET="gem5";
 	export M3_ISA="x86_64";
 	export M3_BUILD="release";
-	./b $@
+	if [ $# -le 1 ]; then
+		./b run boot/hello.xml;
+	else
+		./b $@;
+	fi
 else
 	echo "please first enter a nix shell:";
 	echo "nix --extra-experimental-features 'nix-command flakes' develop";
