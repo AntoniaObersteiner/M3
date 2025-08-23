@@ -1,3 +1,29 @@
 #!/usr/bin/bash
 
-nix --extra-experimental-features 'nix-command flakes' develop
+nix_profile="$HOME/.nix-profile/etc/profile.d/nix.sh" 
+
+echo "which nix: '$(which nix)'"
+echo "which nix-user-chroot: '$(which nix-user-chroot)'"
+echo "ls -l '$nix_profile': '$(ls -l "$nix_profile")'"
+
+if [ -z "$(which nix)" ]; then
+	if [ -f "$nix_profile" -a '!' -v NIX_STORE ]; then
+		# load the env vars for nix, if we're in a nix-user-chroot environment
+		. "$nix_profile"
+	elif [ -n "$(which nix-user-chroot)" -a '!' -v BNIX_RECURSION ]; then
+		echo "using nix-user-chroot ~/.nix bash $0"
+		# if we're not in a nix-user-chroot environment, but can start one, start that and call this script.
+		# set a recursion marker to avoid infinite recursion.
+		BNIX_RECURSION=1 nix-user-chroot ~/.nix bash $0;
+	else
+		echo "we don't know, where nix is, we don't have the nix-profile .sh " \
+			"and we don't even have nix-user-chroot for a start."
+	fi
+fi
+
+if [ -n "$(which nix)" ]; then
+	# start the nix shell
+	nix --extra-experimental-features 'nix-command flakes' develop
+else
+	echo "we still have no 'nix' to execute!";
+fi
