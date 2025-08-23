@@ -322,6 +322,9 @@ if [ $skipbuild -eq 0 ]; then
         fi
     else
         echo "Building for $M3_TARGET-$M3_ISA-$M3_BUILD..." >&2
+		echo "which python3: $(which python3)"
+		echo "and external LD_LIBRARY_PATH: '$LD_LIBRARY_PATH' (replaced with cross-compiler here...)"
+		LD_LIBRARY_PATH="$(pwd)/build/cross-x86_64/host/lib" \
         python3 -B ./tools/ninjapie/ninjapie "${ninjapieargs[@]}" -- "${ninjaargs[@]}" || exit 1
     fi
 fi
