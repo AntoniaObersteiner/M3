@@ -4,6 +4,8 @@
 *.sublime-workspace
 *.ninja_deps
 *.ninja_log
+*.swp
+*.swo
 /.cache
 /.remote-build
 /.remote-build-failed
