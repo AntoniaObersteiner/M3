@@ -1,13 +1,21 @@
 #!/usr/bin/bash
 
 nix_profile="$HOME/.nix-profile/etc/profile.d/nix.sh" 
+export LD_LIBRARY_PATH=
 
 echo "which nix: '$(which nix)'"
-echo "which nix-user-chroot: '$(which nix-user-chroot)'"
-echo "ls -l '$nix_profile': '$(ls -l "$nix_profile")'"
+echo "which nixstatic: '$(which nix-user-chroot)'"
+echo "which nix-user-chroot: '$(which nixstatic)'"
+echo "ls -l '$nix_profile': '$(ls -l "$nix_profile" 2>/dev/null)'"
+
+# we might want to replace that command with nixstatic
+_nix=nix
 
 if [ -z "$(which nix)" ]; then
-	if [ -f "$nix_profile" -a '!' -v NIX_STORE ]; then
+	if [ -n "$(which nixstatic)" -a '!' -v NIX_STORE ]; then
+		# use nixstatic to start the develop shell
+		_nix=nixstatic
+	elif [ -f "$nix_profile" -a '!' -v NIX_STORE ]; then
 		# load the env vars for nix, if we're in a nix-user-chroot environment
 		. "$nix_profile"
 	elif [ -n "$(which nix-user-chroot)" -a '!' -v BNIX_RECURSION ]; then
@@ -21,9 +29,9 @@ if [ -z "$(which nix)" ]; then
 	fi
 fi
 
-if [ -n "$(which nix)" ]; then
+if [ -n "$(which $_nix)" ]; then
 	# start the nix shell
-	nix --extra-experimental-features 'nix-command flakes' develop
+	$_nix --extra-experimental-features 'nix-command flakes' develop
 else
-	echo "we still have no 'nix' to execute!";
+	echo "we still have no 'nix' (more precisely: command '$_nix') to execute!";
 fi
