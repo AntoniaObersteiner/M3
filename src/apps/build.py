@@ -1,5 +1,6 @@
 dirs = [
     'allocator',
+    'aosattack',
     'bench',
     'bsdutils',
     'coreutils',

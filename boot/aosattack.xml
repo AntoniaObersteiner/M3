@@ -1,0 +1,13 @@
+<config>
+    <kernel args="kernel -m 4m" />
+    <dom>
+        <app args="root">
+            <dom>
+				<app args="aosattack mory" kernmem="1M" />
+            </dom>
+            <dom>
+                <app args="allocator" />
+            </dom>
+        </app>
+    </dom>
+</config>
