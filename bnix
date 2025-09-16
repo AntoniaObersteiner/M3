@@ -1,7 +1,9 @@
 #!/usr/bin/bash
 
 nix_profile="$HOME/.nix-profile/etc/profile.d/nix.sh" 
-export LD_LIBRARY_PATH=
+if [ "$HOSTNAME" != "ao-fwk" ]; then
+	export LD_LIBRARY_PATH=;
+fi
 
 echo "which nix: '$(which nix)'"
 echo "which nixstatic: '$(which nix-user-chroot)'"
