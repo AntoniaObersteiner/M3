@@ -55,11 +55,13 @@ impl ActivityMng {
         INST.borrow().count
     }
 
+    /// time(1)
     #[inline(always)]
     pub fn activity(id: tcu::ActId) -> Option<Rc<Activity>> {
         INST.borrow().acts[id as usize].as_ref().cloned()
     }
 
+    /// time(MAX_ACTS)
     fn get_id() -> Result<tcu::ActId, Error> {
         let mut actmng = INST.borrow_mut();
         for id in actmng.next_id..cfg::MAX_ACTS as tcu::ActId {
@@ -79,6 +81,10 @@ impl ActivityMng {
         Err(Error::new(Code::NoSpace))
     }
 
+    /// time(
+    ///     MAX_ACTS + STD_EPS_COUNT + (tilemux acts Vec push) +
+    ///     log|act map_caps| + PMEM_PROT_EPS + |block| + serial + async
+    /// )
     pub fn create_activity_async(
         name: &str,
         tile: SRc<TileObject>,
@@ -114,6 +120,7 @@ impl ActivityMng {
         Ok(clone)
     }
 
+    /// time(log|act map_caps| + PMEM_PROT_EPS + |block| + serial + async)
     fn init_activity_async(act: &Activity) -> Result<(), Error> {
         if platform::tile_desc(act.tile_id()).supports_tilemux() {
             TileMux::activity_init_async(

@@ -89,14 +89,17 @@ pub fn user_tiles() -> impl Iterator<Item = TileId> {
         .map(|t| t.id)
 }
 
+/// time(1)
 pub fn tile_desc(id: TileId) -> TileDesc {
     get().tiles[id.chip() as usize][id.tile() as usize].desc
 }
 
+/// time(1)
 pub fn is_shared(id: TileId) -> bool {
     tile_desc(id).is_programmable()
 }
 
+/// time(raw_tile_count)
 fn get_tile_ids() -> Vec<TileId> {
     let mut log_ids = Vec::new();
     let mut log_chip = 0;

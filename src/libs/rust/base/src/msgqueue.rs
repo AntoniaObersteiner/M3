@@ -76,6 +76,8 @@ impl<S: MsgSender<M>, M> MsgQueue<S, M> {
     ///
     /// If sending is currently possible, it happens immediately. Otherwise, the message is queued
     /// for a later retry, which needs to be triggered via [`MsgQueue::send_pending`].
+    ///
+    /// time(|msg|)
     pub fn send(&mut self, meta: M, msg: &MsgBuf) -> Result<bool, Error> {
         if self.sender.can_send() {
             return self.sender.send(meta, msg).map(|_| true);

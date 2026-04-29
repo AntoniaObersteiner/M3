@@ -45,6 +45,7 @@ fn log_flag(tile: TileId) -> LogFlags {
     }
 }
 
+/// time(cfg)
 pub fn config_local_ep<CFG>(ep: EpId, cfg: CFG)
 where
     CFG: FnOnce(&mut [Reg], (TileId, EpId)),
@@ -57,6 +58,7 @@ where
     TCU::set_ep_regs(ep, &regs);
 }
 
+/// time(cfg)
 pub fn config_remote_ep<CFG>(tile: TileId, ep: EpId, cfg: CFG) -> Result<(), Error>
 where
     CFG: FnOnce(&mut [Reg], (TileId, EpId)),
@@ -66,6 +68,7 @@ where
     write_ep_remote(tile, ep, &regs)
 }
 
+/// time(1)
 pub fn config_recv(
     regs: &mut [Reg],
     tgtep: (TileId, EpId),
@@ -90,6 +93,7 @@ pub fn config_recv(
     TCU::config_recv(regs, act, buf, buf_ord, msg_ord, reply_eps);
 }
 
+/// time(1)
 #[allow(clippy::too_many_arguments)]
 pub fn config_send(
     regs: &mut [Reg],
@@ -117,6 +121,7 @@ pub fn config_send(
     TCU::config_send(regs, act, lbl, tile, ep, msg_ord, credits);
 }
 
+/// time(1)
 pub fn config_mem(
     regs: &mut [Reg],
     tgtep: (TileId, EpId),
@@ -189,6 +194,7 @@ pub fn ack_msg(rep: EpId, msg: &Message) {
     TCU::ack_msg(rep, off).unwrap();
 }
 
+/// time(busy)
 pub fn send_to(
     tile: TileId,
     ep: EpId,
@@ -214,15 +220,18 @@ pub fn send_to(
     TCU::send(KTMP_EP, msg, rpl_lbl, rpl_ep)
 }
 
+/// time(|reply| + busy)
 pub fn reply(ep: EpId, reply: &mem::MsgBuf, msg: &Message) -> Result<(), Error> {
     let msg_off = TCU::msg_to_offset(RBUFS.borrow()[ep as usize], msg);
     TCU::reply(ep, reply, msg_off)
 }
 
+/// time(|T|)
 pub fn read_obj<T: Default>(tile: TileId, addr: GlobOff) -> T {
     try_read_obj(tile, addr).unwrap()
 }
 
+/// time(|T|)
 pub fn try_read_obj<T: Default>(tile: TileId, addr: GlobOff) -> Result<T, Error> {
     let mut obj: T = T::default();
     let obj_addr = &mut obj as *mut T as *mut u8;
@@ -230,10 +239,12 @@ pub fn try_read_obj<T: Default>(tile: TileId, addr: GlobOff) -> Result<T, Error>
     Ok(obj)
 }
 
+/// time(|data|)
 pub fn read_slice<T>(tile: TileId, addr: GlobOff, data: &mut [T]) {
     try_read_slice(tile, addr, data).unwrap();
 }
 
+/// time(|data|)
 pub fn try_read_slice<T>(tile: TileId, addr: GlobOff, data: &mut [T]) -> Result<(), Error> {
     try_read_mem(
         tile,
@@ -243,6 +254,7 @@ pub fn try_read_slice<T>(tile: TileId, addr: GlobOff, data: &mut [T]) -> Result<
     )
 }
 
+/// time(size)
 pub fn try_read_mem(
     src_tile: TileId,
     addr: GlobOff,
@@ -262,20 +274,24 @@ pub fn try_read_mem(
     TCU::read(KTMP_EP, data, size, 0)
 }
 
+/// time(|sl|)
 pub fn write_slice<T>(tile: TileId, addr: GlobOff, sl: &[T]) {
     let sl_addr = sl.as_ptr() as *const u8;
     write_mem(tile, addr, sl_addr, mem::size_of_val(sl));
 }
 
+/// time(|sl|)
 pub fn try_write_slice<T>(tile: TileId, addr: GlobOff, sl: &[T]) -> Result<(), Error> {
     let sl_addr = sl.as_ptr() as *const u8;
     try_write_mem(tile, addr, sl_addr, mem::size_of_val(sl))
 }
 
+/// time(size)
 pub fn write_mem(tile: TileId, addr: GlobOff, data: *const u8, size: usize) {
     try_write_mem(tile, addr, data, size).unwrap();
 }
 
+/// time(size)
 pub fn try_write_mem(
     dst_tile: TileId,
     addr: GlobOff,
@@ -365,6 +381,7 @@ pub fn reset_tile(tile: TileId, start: bool) -> Result<(), Error> {
     }
 }
 
+/// time(PMEM_PROT_EPS)
 pub fn glob_to_phys_remote(
     tile: TileId,
     glob: GlobAddr,
@@ -381,6 +398,7 @@ pub fn glob_to_phys_remote(
     })
 }
 
+/// time(|regs|)
 pub fn read_ep_remote(tile: TileId, ep: EpId, regs: &mut [Reg]) -> Result<(), Error> {
     for i in 0..regs.len() {
         try_read_slice(
@@ -392,6 +410,7 @@ pub fn read_ep_remote(tile: TileId, ep: EpId, regs: &mut [Reg]) -> Result<(), Er
     Ok(())
 }
 
+/// time(|regs|)
 pub fn write_ep_remote(tile: TileId, ep: EpId, regs: &[Reg]) -> Result<(), Error> {
     for (i, r) in regs.iter().enumerate() {
         try_write_slice(tile, (TCU::ep_regs_addr(ep) + i * 8).as_goff(), &[*r])?;
@@ -399,6 +418,7 @@ pub fn write_ep_remote(tile: TileId, ep: EpId, regs: &[Reg]) -> Result<(), Error
     Ok(())
 }
 
+/// time(busy)
 pub fn invalidate_ep_remote(tile: TileId, ep: EpId, force: bool) -> Result<u32, Error> {
     log!(LogFlags::KernEPs, "{}:EP{} = invalid", tile, ep);
 
@@ -449,6 +469,7 @@ pub fn inv_reply_remote(
     Ok(())
 }
 
+/// time(busy)
 fn do_ext_cmd(tile: TileId, cmd: Reg) -> Result<Reg, Error> {
     let addr = TCU::ext_reg_addr(ExtReg::ExtCmd).as_goff();
     try_write_slice(tile, addr, &[cmd])?;

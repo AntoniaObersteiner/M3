@@ -61,6 +61,7 @@ trait ELFLoader {
     }
 }
 
+/// time(log|act map_caps| + PMEM_PROT_EPS + async)
 pub fn init_activity_async(act: &Activity) -> Result<i32, Error> {
     let mut loader = ActivityELFLoader(act);
 
@@ -301,6 +302,7 @@ impl ELFLoader for MetalELFLoader {
 struct ActivityELFLoader<'a>(&'a Activity);
 
 impl ELFLoader for ActivityELFLoader<'_> {
+    /// time(log|act map_caps| + async)
     fn load_segment_async(
         &mut self,
         virt: VirtAddr,

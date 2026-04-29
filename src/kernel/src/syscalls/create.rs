@@ -32,6 +32,7 @@ use crate::platform;
 use crate::syscalls::{get_request, reply_success, send_reply};
 use crate::tiles::{tilemng, Activity, ActivityFlags, ActivityMng};
 
+/// time(log|act obj_caps| + log|target act map_caps|)
 #[inline(never)]
 pub fn create_mgate(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::CreateMGate = get_request(msg)?;
@@ -110,6 +111,7 @@ pub fn create_mgate(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<()
     Ok(())
 }
 
+/// time(log|act obj_caps|)
 #[inline(never)]
 pub fn create_rgate(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::CreateRGate = get_request(msg)?;
@@ -143,6 +145,7 @@ pub fn create_rgate(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<()
     Ok(())
 }
 
+/// time(log|act obj_caps|)
 #[inline(never)]
 pub fn create_sgate(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::CreateSGate = get_request(msg)?;
@@ -175,6 +178,7 @@ pub fn create_sgate(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<()
     Ok(())
 }
 
+/// time(log|act obj_caps|)
 #[inline(never)]
 pub fn create_srv(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::CreateSrv<'_> = get_request(msg)?;
@@ -212,6 +216,7 @@ pub fn create_srv(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), 
     Ok(())
 }
 
+/// time(log|act obj_caps|)
 #[inline(never)]
 pub fn create_sess(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::CreateSess = get_request(msg)?;
@@ -247,6 +252,12 @@ pub fn create_sess(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(),
     Ok(())
 }
 
+/// time(
+///     log|act obj_caps| +
+///     MAX_ACTS + STD_EPS_COUNT + (tilemux acts Vec push) +
+///     log|act map_caps| + PMEM_PROT_EPS + |block| + serial +
+///     (act ep Vec push) + async
+/// )
 #[inline(never)]
 pub fn create_activity_async(
     act: &Rc<Activity>,
@@ -323,7 +334,13 @@ pub fn create_activity_async(
         {
             let scap = Capability::new(
                 r.dst + 1 + i as CapSel,
-                KObject::EP(EPObject::new(true, nact_rc.clone(), *ep, 0, nact.tile())),
+                KObject::EP(EPObject::new(
+                    true,
+                    nact_rc.clone(),
+                    *ep,
+                    0,
+                    nact.tile()
+                )),
             );
             try_kmem_quota!(act.obj_caps().borrow_mut().insert_as_child(scap, r.dst));
         }
@@ -339,6 +356,7 @@ pub fn create_activity_async(
     Ok(())
 }
 
+/// time(log|act obj_caps|)
 #[inline(never)]
 pub fn create_sem(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::CreateSem = get_request(msg)?;
@@ -355,6 +373,7 @@ pub fn create_sem(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), 
     Ok(())
 }
 
+/// time(log|act obj_caps| + log|dst_act map_caps| + async)
 #[inline(never)]
 pub fn create_map_async(
     act: &Rc<Activity>,

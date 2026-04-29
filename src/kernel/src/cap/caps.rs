@@ -38,10 +38,12 @@ pub struct SelRange {
 }
 
 impl SelRange {
+    /// time(1)
     pub fn new(sel: CapSel) -> Self {
         Self::new_range(sel, 1)
     }
 
+    /// time(1)
     pub fn new_range(sel: CapSel, count: CapSel) -> Self {
         SelRange { start: sel, count }
     }
@@ -105,10 +107,12 @@ impl CapTable {
         self.caps.is_empty()
     }
 
+    /// time(log|caps|)
     pub fn unused(&self, sel: CapSel) -> bool {
         self.get(sel).is_none()
     }
 
+    /// time(|crd|·log|caps|)
     pub fn range_unused(&self, crd: &CapRngDesc) -> bool {
         for s in crd.start()..crd.start() + crd.count() {
             if self.get(s).is_some() {
@@ -118,19 +122,23 @@ impl CapTable {
         true
     }
 
+    /// time(log|caps|)
     pub fn get(&self, sel: CapSel) -> Option<&Capability> {
         self.caps.get(&SelRange::new(sel))
     }
 
+    /// time(log|caps|)
     pub fn get_mut(&mut self, sel: CapSel) -> Option<&mut Capability> {
         self.caps.get_mut(&SelRange::new(sel))
     }
 
+    /// time(log|caps|)
     #[inline(always)]
     pub fn insert(&mut self, cap: Capability) -> Result<(), Error> {
         self.insert_new(cap, None)
     }
 
+    /// time(log|caps|)
     #[inline(always)]
     pub fn insert_as_child(&mut self, cap: Capability, parent_sel: CapSel) -> Result<(), Error> {
         unsafe {
@@ -139,6 +147,7 @@ impl CapTable {
         }
     }
 
+    /// time(log|caps| + log|par_tbl|)
     #[inline(always)]
     pub fn insert_as_child_from(
         &mut self,
@@ -159,6 +168,7 @@ impl CapTable {
             .map(|cap| NonNull::new_unchecked(cap))
     }
 
+    /// time(log|caps|)
     #[inline(always)]
     fn insert_new(
         &mut self,
@@ -204,6 +214,7 @@ impl CapTable {
         Ok(())
     }
 
+    /// time(log|caps|)
     fn do_insert(&mut self, mut cap: Capability) -> &mut Capability {
         unsafe {
             cap.table = Some(as_shared(self));
@@ -285,10 +296,12 @@ impl Capability {
         128 + crate::slab::HEADER_SIZE
     }
 
+    /// time(1)
     pub fn new(sel: CapSel, obj: KObject) -> Self {
         Self::new_range(SelRange::new(sel), obj)
     }
 
+    /// time(1)
     pub fn new_range(sels: SelRange, obj: KObject) -> Self {
         Capability {
             sels,
@@ -318,6 +331,7 @@ impl Capability {
         &self.obj
     }
 
+    /// time(1)
     pub fn has_parent(&self) -> bool {
         self.parent.is_some()
     }
@@ -352,6 +366,7 @@ impl Capability {
         None
     }
 
+    /// time(1)
     fn inherit(&mut self, child: &mut Capability) {
         unsafe {
             child.parent = Some(as_shared(self));

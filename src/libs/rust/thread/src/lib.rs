@@ -249,6 +249,7 @@ pub fn init() {
 }
 
 impl ThreadManager {
+    /// time(1)
     fn new() -> Self {
         ThreadManager {
             current: Some(Thread::new_main()),
@@ -258,6 +259,7 @@ impl ThreadManager {
         }
     }
 
+    /// time(|block|)
     fn notify(&mut self, event: Event, msg: Option<&'static tcu::Message>) {
         let mut it = self.block.iter_mut();
         while let Some(t) = it.next() {
@@ -277,6 +279,7 @@ impl ThreadManager {
         }
     }
 
+    /// time(1)
     fn get_next(&mut self) -> Option<Box<Thread>> {
         if !self.ready.is_empty() {
             self.ready.pop_front()
@@ -315,12 +318,14 @@ pub fn fetch_msg() -> Option<&'static tcu::Message> {
     }
 }
 
+/// time(1)
 pub fn add_thread(func_addr: VirtAddr, arg: usize) {
     TMNG.borrow_mut()
         .sleep
         .push_back(Thread::new(func_addr, arg));
 }
 
+/// time(1)
 pub fn remove_thread() {
     TMNG.borrow_mut().sleep.pop_front().unwrap();
 }
@@ -364,6 +369,7 @@ pub fn wait_for(event: Event) {
     }
 }
 
+/// time(|block|)
 pub fn notify(event: Event, msg: Option<&'static Message>) {
     TMNG.borrow_mut().notify(event, msg)
 }

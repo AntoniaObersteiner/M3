@@ -105,6 +105,7 @@ impl<K: Copy + Ord, V> Treap<K, V> {
     }
 
     /// Returns a reference to the value for the given key
+    /// time(log|nodes|)
     pub fn get(&self, key: &K) -> Option<&V> {
         self.get_node(key).map(|n| unsafe { &(*n.as_ptr()).value })
     }
@@ -125,6 +126,7 @@ impl<K: Copy + Ord, V> Treap<K, V> {
         }
     }
 
+    /// time(log|nodes|)
     fn get_node(&self, key: &K) -> Option<NonNull<Node<K, V>>> {
         let mut node = self.root;
         loop {
@@ -143,12 +145,14 @@ impl<K: Copy + Ord, V> Treap<K, V> {
 
     /// Inserts the given value for given key, assuming that the key does not exist in the tree and
     /// returns a mutable reference to the stored value
+    /// time(log|nodes|)
     #[inline(always)]
     pub fn insert(&mut self, key: K, value: V) -> &mut V {
         let node = Box::new(Node::new(key, value, self.prio));
         self.do_insert(node)
     }
 
+    /// time(log|nodes|)
     fn do_insert(&mut self, mut node: Box<Node<K, V>>) -> &mut V {
         unsafe {
             let mut q = &mut self.root;

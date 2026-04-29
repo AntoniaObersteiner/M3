@@ -67,6 +67,7 @@ pub fn deinit_async() {
     STATE.set(State::SHUTDOWN);
 }
 
+/// time(1)
 pub fn tilemux(tile: TileId) -> RefMut<'static, TileMux> {
     RefMut::map(MUXES.borrow_mut(), |muxes| {
         muxes[tile.chip() as usize][tile.tile() as usize]
@@ -75,6 +76,7 @@ pub fn tilemux(tile: TileId) -> RefMut<'static, TileMux> {
     })
 }
 
+/// time(|tiles|)
 pub fn find_tile(tiledesc: &kif::TileDesc) -> Option<TileId> {
     platform::user_tiles().find(|&tile| {
         platform::tile_desc(tile).isa() == tiledesc.isa()
@@ -82,6 +84,7 @@ pub fn find_tile(tiledesc: &kif::TileDesc) -> Option<TileId> {
     })
 }
 
+/// time(|tiles|)
 fn deprivilege_tiles() {
     for tile in platform::user_tiles() {
         ktcu::deprivilege_tile(tile).expect("Unable to deprivilege tile");

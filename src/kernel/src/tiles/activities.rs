@@ -83,6 +83,7 @@ pub struct Activity {
 }
 
 impl Activity {
+    /// time(STD_EPS_COUNT)
     pub fn new(
         name: &str,
         id: ActId,
@@ -143,6 +144,7 @@ impl Activity {
         Ok(act)
     }
 
+    /// time(log|act map_caps| + PMEM_PROT_EPS + |block| + serial + async)
     pub fn init_async(&self) -> Result<(), Error> {
         use base::kif::PageFlags;
 
@@ -170,6 +172,7 @@ impl Activity {
         }
     }
 
+    /// time(|block| + serial + async)
     pub fn init_eps(&self, rbuf_phys: PhysAddr) -> Result<(), Error> {
         use crate::cap::{RGateObject, SGateObject};
         use base::cfg;
@@ -298,10 +301,12 @@ impl Activity {
         self.exit_code.replace(None)
     }
 
+    /// time(Vec push)
     pub fn add_ep(&self, ep: Rc<EPObject>) {
         self.eps.borrow_mut().push(ep);
     }
 
+    /// time(|eps|)
     pub fn rem_ep(&self, ep: &Rc<EPObject>) {
         self.eps.borrow_mut().retain(|e| e.ep() != ep.ep());
     }

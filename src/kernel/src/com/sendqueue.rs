@@ -30,6 +30,7 @@ pub const MAX_PENDING_MSGS: usize = 4;
 static PENDING_QUEUES: LazyStaticRefCell<VecDeque<*mut SendQueue>> = LazyStaticRefCell::default();
 static PENDING_MSGS: StaticCell<usize> = StaticCell::new(0);
 
+/// time(VecDeque grow)
 fn delay_queue(queue: &mut SendQueue) {
     if !queue.pending {
         queue.pending = true;
@@ -158,6 +159,7 @@ impl SendQueue {
         self.queue.sender().id
     }
 
+    /// time(1) TIMETODO: VecDeque grow time is amortized
     pub fn send(
         &mut self,
         rep: tcu::EpId,

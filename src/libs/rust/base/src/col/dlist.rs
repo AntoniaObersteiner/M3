@@ -311,6 +311,7 @@ impl<T> DList<T> {
     }
 
     /// Inserts the given element at the end of the list
+    /// time(1)
     pub fn push_back(&mut self, data: T) {
         unsafe {
             let mut node = Box::new(Node::new(data));

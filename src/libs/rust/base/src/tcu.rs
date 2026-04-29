@@ -477,6 +477,8 @@ impl TCU {
     ///
     /// If the number of left credits is not sufficient, the function returns
     /// [`MissCredits`](Code::NoCredits).
+    ///
+    /// time(|msg| + busy)
     #[inline(always)]
     pub fn send(
         ep: EpId,
@@ -497,6 +499,8 @@ impl TCU {
     ///
     /// If the number of left credits is not sufficient, the function returns
     /// [`MissCredits`](Code::NoCredits).
+    ///
+    /// time(len + busy)
     #[inline(always)]
     pub fn send_aligned(
         ep: EpId,
@@ -517,6 +521,8 @@ impl TCU {
     }
 
     /// Sends the given message as reply to `msg`.
+    ///
+    /// time(|reply| + busy)
     #[inline(always)]
     pub fn reply(ep: EpId, reply: &mem::MsgBuf, msg_off: usize) -> Result<(), Error> {
         Self::reply_aligned(ep, reply.bytes().as_ptr(), reply.size(), msg_off)
@@ -524,6 +530,8 @@ impl TCU {
 
     /// Sends the given message as reply to `msg`. The message address needs to be 16-byte aligned
     /// and `reply`..`reply` + `len` cannot contain a page boundary.
+    ///
+    /// time(len + busy)
     #[inline(always)]
     pub fn reply_aligned(
         ep: EpId,
@@ -540,6 +548,7 @@ impl TCU {
         )
     }
 
+    /// time(busy)
     #[inline(always)]
     fn perform_send_reply(msg_addr: VirtAddr, cmd: Reg) -> Result<(), Error> {
         loop {
@@ -558,6 +567,8 @@ impl TCU {
     }
 
     /// Reads `size` bytes from offset `off` in the memory region denoted by the endpoint into `data`.
+    ///
+    /// time(size)
     #[inline(always)]
     pub fn read(ep: EpId, data: *mut u8, size: usize, off: GlobOff) -> Result<(), Error> {
         let res = Self::perform_transfer(ep, VirtAddr::from(data), size, off, CmdOpCode::Read);
@@ -568,6 +579,8 @@ impl TCU {
     }
 
     /// Writes `size` bytes from `data` to offset `off` in the memory region denoted by the endpoint.
+    ///
+    /// time(size)
     #[inline(always)]
     pub fn write(ep: EpId, data: *const u8, size: usize, off: GlobOff) -> Result<(), Error> {
         // ensure that the TCU is not reading the data before the CPU has written everything
@@ -575,6 +588,7 @@ impl TCU {
         Self::perform_transfer(ep, VirtAddr::from(data), size, off, CmdOpCode::Write)
     }
 
+    /// time(size)
     #[inline(always)]
     fn perform_transfer(
         ep: EpId,
@@ -674,6 +688,8 @@ impl TCU {
     ///
     /// Returns `Some((<tile>, <address>, <size>, <perm>))` if the given EP is a memory EP, or `None`
     /// otherwise.
+    ///
+    /// time(1)
     pub fn unpack_mem_ep(ep: EpId) -> Option<(TileId, GlobOff, GlobOff, Perm)> {
         let r0 = Self::read_ep_reg(ep, 0);
         let r1 = Self::read_ep_reg(ep, 1);
@@ -685,6 +701,8 @@ impl TCU {
     ///
     /// Returns `Some((<tile>, <address>, <size>, <perm>))` if the given registers represent a memory
     /// EP, or `None` otherwise.
+    ///
+    /// time(1)
     pub fn unpack_mem_regs(regs: &[Reg]) -> Option<(TileId, GlobOff, GlobOff, Perm)> {
         if (regs[0] & 0x7) != EpType::Memory.into() {
             return None;
@@ -708,6 +726,8 @@ impl TCU {
     }
 
     /// Waits until the current command is completed and returns the error, if any occurred
+    ///
+    /// time(busy)
     #[inline(always)]
     pub fn get_error() -> Result<(), Error> {
         loop {
@@ -1024,6 +1044,8 @@ impl TCU {
     }
 
     /// Writes the given address and size into the Data register
+    ///
+    /// time(size)
     pub fn write_data(addr: VirtAddr, size: usize) {
         #[cfg(feature = "hw22")]
         Self::write_unpriv_reg(
@@ -1054,11 +1076,15 @@ impl TCU {
     }
 
     /// Returns the value of the given unprivileged register
+    ///
+    /// time(1)
     pub fn read_unpriv_reg(reg: UnprivReg) -> Reg {
         Self::read_reg(EXT_REGS + reg as usize)
     }
 
     /// Sets the value of the given unprivileged register to `val`
+    ///
+    /// time(1)
     pub fn write_unpriv_reg(reg: UnprivReg, val: Reg) {
         Self::write_reg(EXT_REGS + reg as usize, val)
     }
@@ -1097,6 +1123,7 @@ impl TCU {
         };
     }
 
+    /// time(1)
     fn build_cmd(ep: EpId, cmd: CmdOpCode, arg: Reg) -> Reg {
         cmd as Reg | ((ep as Reg) << 4) | (arg << 25)
     }
@@ -1162,6 +1189,7 @@ impl TCU {
         unreachable!();
     }
 
+    /// time(1)
     pub fn config_recv(
         regs: &mut [Reg],
         act: ActId,
@@ -1179,6 +1207,7 @@ impl TCU {
         regs[2] = 0;
     }
 
+    /// time(1)
     pub fn config_send(
         regs: &mut [Reg],
         act: ActId,
@@ -1197,6 +1226,7 @@ impl TCU {
         regs[2] = lbl as Reg;
     }
 
+    /// time(1)
     pub fn config_mem(
         regs: &mut [Reg],
         act: ActId,
@@ -1214,6 +1244,8 @@ impl TCU {
     }
 
     /// Configures the given endpoint
+    ///
+    /// time(1)
     pub fn set_ep_regs(ep: EpId, regs: &[Reg]) {
         let off = EXT_REGS + UNPRIV_REGS + EP_REGS * ep as usize;
         unsafe {
@@ -1225,11 +1257,15 @@ impl TCU {
     }
 
     /// Returns the MMIO address for the given external register
+    ///
+    /// time(1)
     pub fn ext_reg_addr(reg: ExtReg) -> VirtAddr {
         MMIO_ADDR + (reg as usize) * mem::size_of::<Reg>()
     }
 
     /// Returns the MMIO address of the given endpoint registers
+    ///
+    /// time(1)
     pub fn ep_regs_addr(ep: EpId) -> VirtAddr {
         MMIO_ADDR + (EXT_REGS + UNPRIV_REGS + EP_REGS * ep as usize) * mem::size_of::<Reg>()
     }

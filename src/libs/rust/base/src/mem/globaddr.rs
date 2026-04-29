@@ -98,6 +98,8 @@ impl GlobAddr {
     /// (EP) that allows the caller to access this memory. Therefore, it walks over all PMP EPs to
     /// check which EP provides access to the address and translates it into the corresponding
     /// physical address.
+    ///
+    /// time(PMEM_PROT_EPS)
     pub fn to_phys(self, access: PageFlags) -> Result<PhysAddr, Error> {
         self.to_phys_with(access, crate::tcu::TCU::unpack_mem_ep)
     }
@@ -107,6 +109,8 @@ impl GlobAddr {
     ///
     /// Similarly to `to_phys`, `to_phys_with` translates from this global address to the physical
     /// address, but instead of reading the PMP EPs, it calls `get_ep` for every EP id.
+    ///
+    /// time(PMEM_PROT_EPS·get_ep)
     pub fn to_phys_with<F>(self, access: PageFlags, get_ep: F) -> Result<PhysAddr, Error>
     where
         F: Fn(EpId) -> Option<(TileId, GlobOff, GlobOff, Perm)>,

@@ -80,18 +80,22 @@ impl TileMux {
         tilemux
     }
 
+    /// time(1)
     pub fn is_initialized(&self) -> bool {
         self.initialized
     }
 
+    /// time(1)
     pub fn has_activities(&self) -> bool {
         !self.acts.is_empty()
     }
 
+    /// time(acts Vec push)
     pub fn add_activity(&mut self, act: ActId) {
         self.acts.push(act);
     }
 
+    /// time(|acts|)
     pub fn rem_activity(&mut self, act: ActId) {
         assert!(!self.acts.is_empty());
         self.acts.retain(|id| *id != act);
@@ -215,10 +219,12 @@ impl TileMux {
         Ok(())
     }
 
+    /// time(1)
     pub fn tile(&self) -> &SRc<TileObject> {
         &self.tile
     }
 
+    /// time(1)
     pub fn tile_id(&self) -> TileId {
         self.tile.tile()
     }
@@ -242,6 +248,7 @@ impl TileMux {
         Ok(())
     }
 
+    /// time(tcu::AVAIL_EPS)
     pub fn find_eps(&self, count: u32) -> Result<EpId, Error> {
         // the PMP EPs cannot be allocated
         let mut start = cmp::max(tcu::FIRST_USER_EP as usize, self.eps.first_clear());
@@ -261,6 +268,7 @@ impl TileMux {
         }
     }
 
+    /// time(count)
     pub fn eps_free(&self, start: EpId, count: u32) -> bool {
         for ep in start..start + count as EpId {
             if self.eps.is_set(ep as usize) {
@@ -270,6 +278,7 @@ impl TileMux {
         true
     }
 
+    /// time(count)
     pub fn alloc_eps(&mut self, start: EpId, count: u32) {
         log!(
             LogFlags::KernEPs,
@@ -284,6 +293,7 @@ impl TileMux {
         }
     }
 
+    /// time(count)
     pub fn free_eps(&mut self, start: EpId, count: u32) {
         log!(
             LogFlags::KernEPs,
@@ -298,6 +308,7 @@ impl TileMux {
         }
     }
 
+    /// time(1)
     fn ep_activity_id(&self, act: ActId) -> ActId {
         match platform::is_shared(self.tile_id()) {
             true => act,
@@ -305,6 +316,7 @@ impl TileMux {
         }
     }
 
+    /// time(1)
     pub fn config_snd_ep(
         &mut self,
         ep: EpId,
@@ -330,6 +342,7 @@ impl TileMux {
         })
     }
 
+    /// time(|block|)
     pub fn config_rcv_ep(
         &mut self,
         ep: EpId,
@@ -354,6 +367,7 @@ impl TileMux {
         Ok(())
     }
 
+    /// time(1)
     pub fn config_mem_ep(
         &mut self,
         ep: EpId,
@@ -375,6 +389,7 @@ impl TileMux {
         })
     }
 
+    /// time(busy)    
     pub fn invalidate_ep(
         &mut self,
         act: ActId,
@@ -417,6 +432,7 @@ impl TileMux {
             .map(|_| ())
     }
 
+    /// time(1 + async)
     pub fn shutdown_async(tilemux: RefMut<'_, Self>) -> Result<(), Error> {
         let mut buf = MsgBuf::borrow_def();
         let msg = kif::tilemux::Shutdown {};
@@ -482,6 +498,7 @@ impl TileMux {
             .map(|r| kif::syscalls::MuxType::try_from(r.val1).unwrap())
     }
 
+    /// time(1 + async)
     pub fn activity_init_async(
         tilemux: RefMut<'_, Self>,
         act: ActId,
@@ -589,6 +606,7 @@ impl TileMux {
             .map(|_| ())
     }
 
+    /// time(async)
     pub fn map_async(
         tilemux: RefMut<'_, Self>,
         act: ActId,
@@ -611,6 +629,7 @@ impl TileMux {
             .map(|_| ())
     }
 
+    /// time(async)
     pub fn unmap_async(
         tilemux: RefMut<'_, Self>,
         act: ActId,
@@ -627,6 +646,7 @@ impl TileMux {
         )
     }
 
+    /// time(async)
     pub fn translate_async(
         tilemux: RefMut<'_, Self>,
         act: ActId,
@@ -659,6 +679,7 @@ impl TileMux {
             .map(|_| ())
     }
 
+    /// time(1)
     fn send_sidecall<R: core::fmt::Debug>(
         &mut self,
         act: Option<ActId>,
@@ -692,6 +713,7 @@ impl TileMux {
         self.queue.send(tcu::TMSIDE_REP, 0, req)
     }
 
+    /// time(1 + async)
     fn send_receive_sidecall_async<R: core::fmt::Debug>(
         mut tilemux: RefMut<'_, Self>,
         act: Option<ActId>,

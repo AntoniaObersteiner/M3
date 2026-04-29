@@ -211,6 +211,7 @@ impl RGateObject {
         self.addr.get() != PhysAddr::default()
     }
 
+    /// time(serial)
     pub fn activate(&self, tile: TileId, ep: EpId, addr: PhysAddr) {
         self.loc.replace(Some((tile, ep)));
         self.addr.replace(addr);
@@ -635,19 +636,23 @@ impl TileObject {
         self.pt_quota
     }
 
+    /// time(1)
     pub fn has_quota(&self, eps: u32) -> bool {
         self.ep_quota.left() >= eps
     }
 
+    /// time(1)
     pub fn add_activity(&self) {
         self.cur_acts.set(self.activities() + 1);
     }
 
+    /// time(1)
     pub fn rem_activity(&self) {
         assert!(self.activities() > 0);
         self.cur_acts.set(self.activities() - 1);
     }
 
+    /// time(1)
     pub fn alloc(&self, eps: u32) {
         log!(
             LogFlags::KernTiles,
@@ -725,6 +730,7 @@ pub struct EPObject {
 }
 
 impl EPObject {
+    /// time(act ep Vec push)
     pub fn new(
         is_std: bool,
         act: Weak<Activity>,
@@ -954,6 +960,7 @@ pub struct MapObject {
 }
 
 impl MapObject {
+    /// time(1)
     pub fn new(glob: GlobAddr, flags: kif::PageFlags) -> SRc<Self> {
         SRc::new(Self {
             glob: Cell::from(glob),
@@ -974,6 +981,7 @@ impl MapObject {
         self.flags.get()
     }
 
+    /// time(async)
     pub fn map_async(
         &self,
         act: &Activity,
@@ -997,6 +1005,7 @@ impl MapObject {
         })
     }
 
+    /// time(async)
     pub fn unmap_async(&self, act: &Activity, virt: VirtAddr, pages: usize) {
         // TODO currently, it can happen that we've already stopped the activity, but still
         // accept/continue a syscall that inserts something into the activity's table.

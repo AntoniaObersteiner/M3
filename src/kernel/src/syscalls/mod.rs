@@ -29,6 +29,7 @@ use crate::ktcu;
 use crate::tiles::Activity;
 use crate::tiles::ActivityMng;
 
+/// time(1)
 #[macro_export]
 macro_rules! sysc_log {
     ($act:expr, $fmt:tt, $($args:tt)*) => (
@@ -40,6 +41,7 @@ macro_rules! sysc_log {
     )
 }
 
+/// time(1)
 #[macro_export]
 macro_rules! sysc_err {
     ($e:expr, $fmt:tt) => ({
@@ -50,6 +52,7 @@ macro_rules! sysc_err {
     });
 }
 
+/// time(1)
 macro_rules! try_kmem_quota {
     ($e:expr) => {
         if let Err(e) = $e {
@@ -58,6 +61,7 @@ macro_rules! try_kmem_quota {
     };
 }
 
+/// time(1)
 macro_rules! as_obj {
     ($kobj:expr, $ty:ident) => {
         match $kobj {
@@ -66,6 +70,7 @@ macro_rules! as_obj {
         }
     };
 }
+/// time(log|act caps|)
 macro_rules! get_cap {
     ($table:expr, $sel:expr) => {{
         // note that we deliberately use match here, because ok_or_else(...)? results in worse code
@@ -75,12 +80,14 @@ macro_rules! get_cap {
         }
     }};
 }
+/// time(log|act obj_caps|)
 macro_rules! get_kobj {
     ($act:expr, $sel:expr, $ty:ident) => {{
         let kobj = get_cap!($act.obj_caps().borrow(), $sel).get().clone();
         as_obj!(kobj, $ty)
     }};
 }
+/// time(log|act caps|)
 macro_rules! get_kobj_ref {
     ($table:expr, $sel:expr, $ty:ident) => {{
         let cap = get_cap!($table, $sel);
@@ -94,20 +101,24 @@ mod exchange;
 mod misc;
 mod tile;
 
+/// time(|rep| + busy)
 fn send_reply(msg: &'static tcu::Message, rep: &mem::MsgBuf) {
     ktcu::reply(ktcu::KSYS_EP, rep, msg).ok();
 }
 
+/// time(busy)
 fn reply_result(msg: &'static tcu::Message, error: Code) {
     let mut rep_buf = mem::MsgBuf::borrow_def();
     build_vmsg!(rep_buf, kif::DefaultReply { error });
     send_reply(msg, &rep_buf);
 }
 
+/// time(busy)
 fn reply_success(msg: &'static tcu::Message) {
     reply_result(msg, Code::Success);
 }
 
+/// time(1)
 fn get_request<R: Deserialize<'static>>(msg: &'static tcu::Message) -> Result<R, Error> {
     let mut de = M3Deserializer::new(msg.as_words());
     de.skip(1);
