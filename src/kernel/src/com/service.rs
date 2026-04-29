@@ -51,11 +51,13 @@ impl Service {
         &self.name
     }
 
+    /// time(|msg| or (pending VecDeque push))
     pub fn send(&self, lbl: tcu::Label, msg: &MsgBuf) -> Result<thread::Event, Error> {
         let (_, rep) = self.rgate.location().unwrap();
         self.queue.borrow_mut().send(rep, lbl, msg)
     }
 
+    /// time(|msg| or (pending VecDeque push) + async)
     pub fn send_receive_async(
         &self,
         lbl: tcu::Label,
@@ -66,6 +68,7 @@ impl Service {
         SendQueue::receive_async(event)
     }
 
+    /// time(|pending queues|·|msg| + |block|)
     pub fn abort(&self) {
         self.queue.borrow_mut().abort();
     }

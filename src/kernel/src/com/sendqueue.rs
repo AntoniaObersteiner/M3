@@ -30,7 +30,7 @@ pub const MAX_PENDING_MSGS: usize = 4;
 static PENDING_QUEUES: LazyStaticRefCell<VecDeque<*mut SendQueue>> = LazyStaticRefCell::default();
 static PENDING_MSGS: StaticCell<usize> = StaticCell::new(0);
 
-/// time(VecDeque grow)
+/// time(pending VecDeque push)
 fn delay_queue(queue: &mut SendQueue) {
     if !queue.pending {
         queue.pending = true;
@@ -43,6 +43,7 @@ fn delay_queue(queue: &mut SendQueue) {
     }
 }
 
+/// time(|pending queues|·|msg|)
 fn resume_queue() {
     if let Some(q) = PENDING_QUEUES.borrow_mut().pop_front() {
         // safety: as soon as a queue is aborted/dropped, we remove it from the PENDING_QUEUES.
@@ -56,6 +57,7 @@ fn resume_queue() {
     }
 }
 
+/// time(|pending queues|)
 fn remove_queue(queue: &mut SendQueue) {
     if queue.pending {
         log!(
@@ -128,12 +130,14 @@ pub fn init_queues() {
     PENDING_QUEUES.set(VecDeque::new());
 }
 
+/// time(1)
 fn alloc_qid() -> u64 {
     static NEXT_ID: StaticCell<u64> = StaticCell::new(0);
     NEXT_ID.set(NEXT_ID.get() + 1);
     NEXT_ID.get()
 }
 
+/// time(1)
 fn get_event(id: u64) -> thread::Event {
     0x8000_0000_0000_0000 | id
 }
@@ -159,7 +163,7 @@ impl SendQueue {
         self.queue.sender().id
     }
 
-    /// time(1) TIMETODO: VecDeque grow time is amortized
+    /// time(|msg| or (pending VecDeque push))
     pub fn send(
         &mut self,
         rep: tcu::EpId,
@@ -192,6 +196,7 @@ impl SendQueue {
         Ok(get_event(id))
     }
 
+    /// time(async)
     pub fn receive_async(event: thread::Event) -> Result<&'static tcu::Message, Error> {
         thread::wait_for(event);
         thread::fetch_msg().ok_or_else(|| Error::new(Code::RecvGone))
@@ -217,6 +222,7 @@ impl SendQueue {
         }
     }
 
+    /// time(|pending queues|·|msg| + |block|)
     pub fn abort(&mut self) {
         log!(LogFlags::KernSQueue, "SendQueue[{:?}]: aborting", self.id());
 

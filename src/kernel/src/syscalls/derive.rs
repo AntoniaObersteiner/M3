@@ -31,6 +31,7 @@ use crate::mem;
 use crate::syscalls::{get_request, reply_success};
 use crate::tiles::{tilemng, Activity, TileMux};
 
+/// time(|request dst|·log|act obj_caps| + busy + async)
 #[inline(never)]
 pub fn derive_tile_async(
     act: &Rc<Activity>,
@@ -98,6 +99,7 @@ pub fn derive_tile_async(
     Ok(())
 }
 
+/// time(log|act obj_caps| + busy)
 #[inline(never)]
 pub fn derive_kmem(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::DeriveKMem = get_request(msg)?;
@@ -126,6 +128,7 @@ pub fn derive_kmem(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(),
     Ok(())
 }
 
+/// time(log|act obj_caps| + busy)
 #[inline(never)]
 pub fn derive_mem(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::DeriveMem = get_request(msg)?;
@@ -165,6 +168,10 @@ pub fn derive_mem(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), 
     Ok(())
 }
 
+/// time(
+///     |request dst|·log|act obj_caps| + |msg| or (pending VecDeque push) +
+///     log|srv obj_caps| + (1 or (upcalls VecDeque push)) + async
+/// )
 #[inline(never)]
 pub fn derive_srv_async(
     act: &Rc<Activity>,

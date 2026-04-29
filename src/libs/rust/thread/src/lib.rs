@@ -140,6 +140,7 @@ pub struct Thread {
 impl_boxitem!(Thread);
 
 extern "C" {
+    /// time(async)
     fn thread_switch(o: *mut Regs, n: *mut Regs);
 }
 
@@ -186,6 +187,7 @@ impl Thread {
         self.id
     }
 
+    /// time(1)
     pub fn fetch_msg(&mut self) -> Option<&'static tcu::Message> {
         if mem::replace(&mut self.has_msg, false) {
             // safety: has_msg is true and we trust the TCU
@@ -200,11 +202,13 @@ impl Thread {
         }
     }
 
+    /// time(1)
     fn subscribe(&mut self, event: Event) {
         assert!(self.event == 0);
         self.event = event;
     }
 
+    /// time(1)
     fn trigger_event(&mut self, event: Event) -> bool {
         if self.event == event {
             self.event = 0;
@@ -215,6 +219,7 @@ impl Thread {
         }
     }
 
+    /// time(|msg|)
     fn set_msg(&mut self, msg: &'static tcu::Message) {
         let size = msg.header.length() + mem::size_of::<tcu::Header>();
         self.has_msg = true;
@@ -311,6 +316,7 @@ pub fn sleeping_count() -> usize {
     TMNG.borrow().sleep.len()
 }
 
+/// time(1)
 pub fn fetch_msg() -> Option<&'static tcu::Message> {
     match TMNG.borrow_mut().current {
         Some(ref mut t) => t.fetch_msg(),
@@ -343,6 +349,7 @@ pub fn alloc_event() -> Event {
     }
 }
 
+/// time(async)
 pub fn wait_for(event: Event) {
     let mut tmng = TMNG.borrow_mut();
     let next = tmng.get_next().unwrap();

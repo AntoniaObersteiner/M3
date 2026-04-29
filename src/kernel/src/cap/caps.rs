@@ -193,6 +193,7 @@ impl CapTable {
         Ok(())
     }
 
+    /// time(log|caps|)
     pub fn obtain(&mut self, sel: CapSel, cap: &mut Capability, child: bool) -> Result<(), Error> {
         let act = self.activity();
         if !act.kmem().alloc(act, sel, Capability::size()) {

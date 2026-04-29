@@ -321,6 +321,7 @@ pub struct MGateObject {
 }
 
 impl MGateObject {
+    /// time(1)
     pub fn new(mem: mem::Allocation, perms: kif::Perm, derived: bool) -> SRc<Self> {
         SRc::new(Self {
             gep: RefCell::from(GateEP::new()),
@@ -892,6 +893,7 @@ impl KMemObject {
         self.left.get() >= size
     }
 
+    /// time(1)
     pub fn alloc(&self, act: &Activity, sel: kif::CapSel, size: usize) -> bool {
         log!(
             LogFlags::KernKMem,
@@ -912,6 +914,7 @@ impl KMemObject {
         }
     }
 
+    /// time(1)
     pub fn free(&self, act: &Activity, sel: kif::CapSel, size: usize) {
         assert!(self.left() + size <= self.quota);
         self.left.set(self.left() + size);

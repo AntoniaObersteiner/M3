@@ -419,6 +419,7 @@ impl Activity {
         self.send_upcall::<kif::upcalls::ActivityWait>(&msg);
     }
 
+    /// time(1 or (upcalls VecDeque push))
     pub fn upcall_derive_srv(&self, event: u64, result: Result<(), Error>) {
         let mut msg = MsgBuf::borrow_def();
         build_vmsg!(
@@ -433,6 +434,7 @@ impl Activity {
         self.send_upcall::<kif::upcalls::DeriveSrv>(&msg);
     }
 
+    /// time(|msg| or (upcalls VecDeque push))
     fn send_upcall<M: fmt::Debug>(&self, msg: &MsgBuf) {
         log!(
             LogFlags::KernUpcalls,

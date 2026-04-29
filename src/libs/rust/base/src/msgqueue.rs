@@ -92,6 +92,8 @@ impl<S: MsgSender<M>, M> MsgQueue<S, M> {
     /// Attempts to send any queued messages
     ///
     /// Returns true if any message was sent
+    ///
+    /// time(|queue|·|msg|)
     pub fn send_pending(&mut self) -> bool {
         loop {
             match self.queue.pop_front() {

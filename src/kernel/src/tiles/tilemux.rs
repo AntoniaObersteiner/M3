@@ -535,6 +535,7 @@ impl TileMux {
             .map(|_| ())
     }
 
+    /// time(1 + async)
     pub fn derive_quota_async(
         tilemux: RefMut<'_, Self>,
         parent_time: quota::Id,
@@ -555,6 +556,7 @@ impl TileMux {
             .map(|r| (r.val1 as quota::Id, r.val2 as quota::Id))
     }
 
+    /// time(1 + async)
     pub fn get_quota_async(
         tilemux: RefMut<'_, Self>,
         time: quota::Id,
