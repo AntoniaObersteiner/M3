@@ -337,6 +337,7 @@ impl Capability {
         self.parent.is_some()
     }
 
+    /// time(|parent chain|)
     pub fn get_root(&mut self) -> &mut Capability {
         if let Some(mut cap) = self.parent {
             unsafe {
@@ -351,6 +352,7 @@ impl Capability {
         }
     }
 
+    /// time(|child chain|)
     pub fn find_child<P>(&mut self, pred: P) -> Option<&mut Capability>
     where
         P: Fn(&Capability) -> bool,

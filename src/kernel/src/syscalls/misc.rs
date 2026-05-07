@@ -29,6 +29,7 @@ use crate::platform;
 use crate::syscalls::{get_request, reply_success, send_reply};
 use crate::tiles::{tilemng, Activity};
 
+/// time(log|act obj_caps| + tcu::AVAIL_EPS or ep_count + ep_count)
 #[inline(never)]
 pub fn alloc_ep(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::AllocEP = get_request(msg)?;
@@ -110,6 +111,7 @@ pub fn alloc_ep(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), Ve
     Ok(())
 }
 
+/// time(log|act.obj_caps| + busy)
 #[inline(never)]
 pub fn mgate_region(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::MGateRegion = get_request(msg)?;
@@ -128,6 +130,7 @@ pub fn mgate_region(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<()
     Ok(())
 }
 
+/// time(log|act.obj_caps| + busy)
 #[inline(never)]
 pub fn rgate_buffer(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::RGateBuffer = get_request(msg)?;
@@ -146,6 +149,7 @@ pub fn rgate_buffer(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<()
     Ok(())
 }
 
+/// time(log|act.obj_caps| + busy)
 #[inline(never)]
 pub fn kmem_quota(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::KMemQuota = get_request(msg)?;
@@ -165,6 +169,7 @@ pub fn kmem_quota(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), 
     Ok(())
 }
 
+/// time(log|act.obj_caps| + log|actcap.obj_caps| + |srvcap parent chain| + |srvcap child sibling chain|)
 #[inline(never)]
 pub fn get_sess(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::GetSess = get_request(msg)?;
@@ -218,6 +223,9 @@ pub fn get_sess(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), Ve
     Ok(())
 }
 
+/// time(log|act obj_caps| + (reply recv_ep buf_size or serial or 1 + busy) +
+///    {MGate: 1, SGate: async, RGate: PMEM_PROT_EPS + 1 or serial + |block|}
+/// )
 #[inline(never)]
 pub fn activate_async(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::Activate = get_request(msg)?;
@@ -238,6 +246,7 @@ pub fn activate_async(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<
     let epid = ep.ep();
     let dst_tile = ep.tile_id();
 
+    /// time(reply recv_ep buf_size or serial or 1 + busy)
     let invalidated = match ep.deconfigure(false) {
         Ok(inv) => inv,
         Err(e) => sysc_err!(e.code(), "Invalidation of EP {}:{} failed", dst_tile, epid),
@@ -263,6 +272,7 @@ pub fn activate_async(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<
         }
 
         match kobj {
+            /// time(1)
             KObject::MGate(ref mg) => {
                 if mg.gate_ep().get_ep().is_some() {
                     sysc_err!(Code::Exists, "MemGate is already activated");
@@ -276,6 +286,7 @@ pub fn activate_async(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<
                 }
             },
 
+            /// time(async)
             KObject::SGate(ref sg) => {
                 if sg.gate_ep().get_ep().is_some() {
                     sysc_err!(Code::Exists, "SendGate is already activated");
@@ -297,6 +308,7 @@ pub fn activate_async(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<
                 }
             },
 
+            /// time(PMEM_PROT_EPS + 1 or serial + |block|)
             KObject::RGate(ref rg) => {
                 if rg.activated() {
                     sysc_err!(Code::Exists, "RecvGate is already activated");
@@ -323,6 +335,7 @@ pub fn activate_async(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<
                     if platform::tile_desc(rbuf.tile_id()).tile_type() != kif::TileType::Mem {
                         sysc_err!(Code::InvArgs, "rbuffer not in physical memory");
                     }
+                    /// time(PMEM_PROT_EPS)
                     let rbuf_phys =
                         ktcu::glob_to_phys_remote(dst_tile, rbuf.addr(), kif::PageFlags::RW)
                             .map_err(|e| {
@@ -359,8 +372,10 @@ pub fn activate_async(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<
                     None
                 };
 
+                /// time(1 or serial)
                 rg.activate(ep_act.tile_id(), epid, rbuf_addr);
 
+                /// time(|block|)
                 if let Err(e) =
                     tilemng::tilemux(dst_tile).config_rcv_ep(epid, ep_act.id(), replies, rg)
                 {
@@ -386,6 +401,7 @@ pub fn activate_async(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<
     Ok(())
 }
 
+/// time(log|act.obj_caps| + {Up: |block|, Down: async})
 #[inline(never)]
 pub fn sem_ctrl_async(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::SemCtrl = get_request(msg)?;
@@ -411,6 +427,12 @@ pub fn sem_ctrl_async(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<
     Ok(())
 }
 
+/// time(log|act.obj_caps| + {Start: async, Stop: 
+///    STD_EPS_COUNT·busy + |eps|·(reply recv_ep buf_size or serial or 1 + busy) +
+///    ((KSYS_EP buf_size)·busy) + |EXIT_LISTENERS| + revoke + async +
+///    (|block| + |EXIT_LISTENERS|·(1 or (upcalls VecDeque push) +
+///        |listener.sels|·log|listener.act.obj_caps|))
+/// })
 #[inline(never)]
 pub fn activity_ctrl_async(
     act: &Rc<Activity>,
@@ -452,6 +474,10 @@ pub fn activity_ctrl_async(
     Ok(())
 }
 
+/// time(
+///    r.act_count·log|act.obj_caps| + match event {upcall: 1 or (upcalls VecDeque push), 0: 1} +
+///    |EXIT_LISTENERS| + (EXIT_LISTENERS push) + async + busy
+/// )
 #[inline(never)]
 pub fn activity_wait_async(
     act: &Rc<Activity>,
@@ -486,6 +512,7 @@ pub fn activity_wait_async(
     Ok(())
 }
 
+/// time(1)
 pub fn reset_stats(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     sysc_log!(act, "reset_stats()",);
 
@@ -498,6 +525,7 @@ pub fn reset_stats(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(),
     Ok(())
 }
 
+/// time(1)
 pub fn noop(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     sysc_log!(act, "noop()",);
 

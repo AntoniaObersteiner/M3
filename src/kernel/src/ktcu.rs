@@ -181,6 +181,7 @@ pub fn recv_msgs(ep: EpId, buf: VirtAddr, ord: u32, msg_ord: u32) -> Result<(), 
     Ok(())
 }
 
+/// time((ep buf_size)·busy)
 pub fn drop_msgs(rep: EpId, label: Label) {
     TCU::drop_msgs_with(RBUFS.borrow()[rep as usize], rep, label);
 }
@@ -366,6 +367,7 @@ pub fn deprivilege_tile(tile: TileId) -> Result<(), Error> {
     try_write_slice(tile, reg_addr, &[features])
 }
 
+/// time(busy)
 pub fn reset_tile(tile: TileId, start: bool) -> Result<(), Error> {
     let val: Reg = if start { 1 } else { 0 };
     if env::boot().platform == env::Platform::Hw {
@@ -426,6 +428,7 @@ pub fn invalidate_ep_remote(tile: TileId, ep: EpId, force: bool) -> Result<u32, 
     do_ext_cmd(tile, reg).map(|unread| unread as u32)
 }
 
+/// time(recv_ep buf_size + busy)
 pub fn inv_reply_remote(
     recv_tile: TileId,
     recv_ep: EpId,

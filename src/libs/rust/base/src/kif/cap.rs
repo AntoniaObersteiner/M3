@@ -46,6 +46,8 @@ pub enum CapType {
 impl CapRngDesc {
     /// Creates a new capability range descriptor. `start` is the first capability selector and
     /// `start + count - 1` is the last one.
+    /// 
+    /// time(1)
     pub fn new(ty: CapType, start: CapSel, count: CapSel) -> CapRngDesc {
         CapRngDesc {
             start,
@@ -54,16 +56,22 @@ impl CapRngDesc {
     }
 
     /// Returns the capability type
+    /// 
+    /// time(1)
     pub fn cap_type(self) -> CapType {
         CapType::from(self.count & 0x1)
     }
 
     /// Returns the first capability selector
+    /// 
+    /// time(1)
     pub fn start(self) -> CapSel {
         self.start
     }
 
     /// Returns the number of capability selectors
+    /// 
+    /// time(1)
     pub fn count(self) -> CapSel {
         self.count >> 1
     }

@@ -135,6 +135,7 @@ impl ActivityMng {
         act.init_async()
     }
 
+    /// time(1 + async)
     pub fn start_activity_async(act: &Activity) -> Result<(), Error> {
         if platform::tile_desc(act.tile_id()).supports_tilemux() {
             TileMux::activity_ctrl_async(
@@ -148,6 +149,7 @@ impl ActivityMng {
         }
     }
 
+    /// time(1 + async)
     pub fn stop_activity_async(act: &Activity, stop: bool) -> Result<(), Error> {
         if stop && platform::tile_desc(act.tile_id()).supports_tilemux() {
             TileMux::activity_ctrl_async(

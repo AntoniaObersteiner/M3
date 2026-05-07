@@ -297,6 +297,7 @@ impl Activity {
         self.first_sel.set(sel);
     }
 
+    /// time(1)
     pub fn fetch_exit_code(&self) -> Option<Code> {
         self.exit_code.replace(None)
     }
@@ -311,6 +312,7 @@ impl Activity {
         self.eps.borrow_mut().retain(|e| e.ep() != ep.ep());
     }
 
+    /// time(|sels|·log|obj_caps|)
     fn fetch_exit(&self, sels: &[u64]) -> Option<(CapSel, Code)> {
         for sel in sels {
             let wact = self
@@ -336,6 +338,10 @@ impl Activity {
         None
     }
 
+    /// time(
+    ///    |sels|·log|obj_caps| + match event {upcall: 1 or (upcalls VecDeque push), 0: 1} +
+    ///    |EXIT_LISTENERS| + (EXIT_LISTENERS push) + async
+    /// )
     pub fn wait_exit_async(&self, event: u64, sels: &[u64]) -> Option<(CapSel, Code)> {
         let res = loop {
             // independent of how we notify the activity, check for exits in case the activity we wait for
@@ -384,6 +390,8 @@ impl Activity {
         }
     }
 
+    /// time(|block| + |EXIT_LISTENERS|·(1 or (upcalls VecDeque push) + 
+    ///    |listener.sels|·log|listener.act.obj_caps|))
     fn send_exit_notify() {
         // notify all that wait without upcall
         let event = &EXIT_EVENT as *const _ as thread::Event;
@@ -403,6 +411,7 @@ impl Activity {
         });
     }
 
+    /// time(1 or (upcalls VecDeque push))
     pub fn upcall_activity_wait(&self, event: u64, act_sel: CapSel, exitcode: Code) {
         let mut msg = MsgBuf::borrow_def();
         build_vmsg!(
@@ -449,6 +458,7 @@ impl Activity {
             .unwrap();
     }
 
+    /// time(1 + async)
     pub fn start_app_async(&self) -> Result<(), Error> {
         if self.state.get() != State::INIT {
             return Ok(());
@@ -458,6 +468,12 @@ impl Activity {
         ActivityMng::start_activity_async(self)
     }
 
+    /// time(
+    ///    STD_EPS_COUNT·busy + |eps|·(reply recv_ep buf_size or serial or 1 + busy) +
+    ///    ((KSYS_EP buf_size)·busy) + |EXIT_LISTENERS| + revoke + async +
+    ///    (|block| + |EXIT_LISTENERS|·(1 or (upcalls VecDeque push)  +
+    ///        |listener.sels|·log|listener.act.obj_caps|))
+    /// )
     pub fn stop_app_async(&self, exit_code: Code, is_self: bool, revoker: ActId) {
         if self.state.get() == State::DEAD {
             return;
@@ -490,6 +506,11 @@ impl Activity {
         }
     }
 
+    /// time(STD_EPS_COUNT·busy + |eps|·(reply recv_ep buf_size or serial or 1 + busy) +
+    ///    ((KSYS_EP buf_size)·busy) + |EXIT_LISTENERS| + revoke + async +
+    ///    (|block| + |EXIT_LISTENERS|·(1 or (upcalls VecDeque push) +
+    ///        + |listener.sels|·log|listener.act.obj_caps|))
+    /// )
     fn exit_app_async(&self, exit_code: Code, stop: bool, revoker: ActId) {
         let mut tilemux = tilemng::tilemux(self.tile_id());
         // force-invalidate standard EPs
@@ -538,6 +559,7 @@ impl Activity {
         }
     }
 
+    /// time(async + revoke)
     pub fn force_stop_async(&self, stop: bool, revoker: ActId) {
         ActivityMng::stop_activity_async(self, stop).unwrap();
 

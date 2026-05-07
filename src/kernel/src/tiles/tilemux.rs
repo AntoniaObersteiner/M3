@@ -101,6 +101,7 @@ impl TileMux {
         self.acts.retain(|id| *id != act);
     }
 
+    /// time(1)
     fn init_eps(&mut self) {
         // configure send EP
         ktcu::config_remote_ep(self.tile_id(), tcu::KPEX_SEP, |regs, tgtep| {
@@ -148,6 +149,10 @@ impl TileMux {
         .unwrap();
     }
 
+    /// time({
+    ///    None: async + PMEM_PROT_EPS·(reply recv_ep buf_size or serial or 1 + busy),
+    ///    Some: 1
+    /// } + busy)
     pub fn reset_async(tile: TileId, mux_mem: Option<GateObject>) -> Result<(), Error> {
         let start = mux_mem.is_some();
 
@@ -233,6 +238,7 @@ impl TileMux {
         &self.pmp[ep as usize]
     }
 
+    /// time(1)
     pub fn configure_pmp_ep(&mut self, ep: tcu::EpId, gate: GateObject) -> Result<(), Error> {
         match gate {
             GateObject::Mem(ref mg) => {
@@ -414,6 +420,7 @@ impl TileMux {
         }
     }
 
+    /// time(recv_ep buf_size + busy)
     pub fn invalidate_reply_eps(
         &self,
         recv_tile: TileId,
@@ -423,6 +430,7 @@ impl TileMux {
         ktcu::inv_reply_remote(recv_tile, recv_ep, self.tile_id(), send_ep)
     }
 
+    /// time(1)
     pub fn reset_stats(&mut self) -> Result<(), Error> {
         let mut buf = MsgBuf::borrow_def();
         let msg = kif::tilemux::ResetStats {};
@@ -489,6 +497,7 @@ impl TileMux {
         Ok(())
     }
 
+    /// time(1 + async)
     pub fn info_async(tilemux: RefMut<'_, Self>) -> Result<kif::syscalls::MuxType, Error> {
         let mut buf = MsgBuf::borrow_def();
         let msg = kif::tilemux::Info {};
@@ -519,6 +528,7 @@ impl TileMux {
             .map(|_| ())
     }
 
+    /// time(1 + async)
     pub fn activity_ctrl_async(
         tilemux: RefMut<'_, Self>,
         act: ActId,
@@ -581,6 +591,7 @@ impl TileMux {
         )
     }
 
+    /// time(1 + async)
     pub fn set_quota_async(
         tilemux: RefMut<'_, Self>,
         id: quota::Id,

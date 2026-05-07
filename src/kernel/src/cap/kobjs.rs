@@ -84,6 +84,7 @@ impl KObject {
         KOBJ_SIZES[idx]
     }
 
+    /// time(1)
     pub fn to_gate(&self) -> Option<GateObject> {
         match self {
             KObject::MGate(g) => Some(GateObject::Mem(g.clone())),
@@ -141,6 +142,7 @@ pub enum GateObject {
 }
 
 impl GateObject {
+    /// time(1)
     pub fn set_ep(&self, ep: &Rc<EPObject>) {
         match self {
             Self::Recv(g) => g.gep.borrow_mut().set_ep(ep),
@@ -149,6 +151,7 @@ impl GateObject {
         }
     }
 
+    /// time(1)
     pub fn remove_ep(&self) {
         match self {
             Self::Recv(g) => g.gep.borrow_mut().remove_ep(),
@@ -211,7 +214,7 @@ impl RGateObject {
         self.addr.get() != PhysAddr::default()
     }
 
-    /// time(serial)
+    /// time(1 or serial)
     pub fn activate(&self, tile: TileId, ep: EpId, addr: PhysAddr) {
         self.loc.replace(Some((tile, ep)));
         self.addr.replace(addr);
@@ -220,6 +223,7 @@ impl RGateObject {
         }
     }
 
+    /// time(1 or serial) 
     pub fn deactivate(&self) {
         self.addr.set(PhysAddr::default());
         self.loc.set(None);
@@ -291,6 +295,7 @@ impl SGateObject {
         self.credits
     }
 
+    /// time(recv_ep buf_size + busy)
     pub fn invalidate_reply_eps(&self) {
         // is the send gate activated?
         if let Some(sep) = self.gate_ep().get_ep() {
@@ -499,6 +504,7 @@ impl SemObject {
         })
     }
 
+    /// time(async)
     pub fn down_async(sem: &SRc<Self>) -> Result<(), Error> {
         while unsafe { ptr::read_volatile(sem.counter.as_ptr()) } == 0 {
             sem.waiters.set(sem.waiters.get() + 1);
@@ -513,6 +519,7 @@ impl SemObject {
         Ok(())
     }
 
+    /// time(|block|)
     pub fn up(&self) {
         if self.waiters.get() > 0 {
             thread::notify(self.get_event(), None);
@@ -788,10 +795,12 @@ impl EPObject {
         self.gate.borrow().is_some()
     }
 
+    /// time(1)
     pub fn configure(ep: &Rc<Self>, gate: &KObject) {
         Self::configure_obj(ep, gate.to_gate().unwrap());
     }
 
+    /// time(1)
     pub fn configure_obj(ep: &Rc<Self>, obj: GateObject) {
         // we tell the gate object its gate object
         obj.set_ep(ep);
@@ -799,6 +808,7 @@ impl EPObject {
         ep.set_gate(obj);
     }
 
+    /// time(reply recv_ep buf_size or serial or 1 + busy)
     pub fn deconfigure(&self, force: bool) -> Result<bool, Error> {
         let mut invalidated = false;
         if let Some(ref gate) = self.gate.borrow_mut().take() {

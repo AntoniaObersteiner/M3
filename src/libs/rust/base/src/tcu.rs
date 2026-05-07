@@ -714,6 +714,8 @@ impl TCU {
     }
 
     /// Marks the given message for receive endpoint `ep` as read
+    ///
+    /// time(1 + busy)
     #[inline(always)]
     pub fn ack_msg(ep: EpId, msg_off: usize) -> Result<(), Error> {
         // ensure that we are really done with the message before acking it
@@ -766,6 +768,8 @@ impl TCU {
     }
 
     /// Drops all messages in the receive buffer of given receive EP that have the given label.
+    ///
+    /// time((ep buf_size)·busy)
     pub fn drop_msgs_with(buf_addr: VirtAddr, ep: EpId, label: Label) {
         // we assume that the one that used the label can no longer send messages. thus, if there
         // are no messages yet, we are done.
@@ -1096,10 +1100,12 @@ impl TCU {
         )
     }
 
+    /// time(1)
     fn read_ep_reg(ep: EpId, reg: usize) -> Reg {
         Self::read_reg(EXT_REGS + UNPRIV_REGS + EP_REGS * ep as usize + reg)
     }
 
+    /// time(1)
     fn read_priv_reg(reg: PrivReg) -> Reg {
         Self::read_reg(((cfg::PAGE_SIZE * 2) / mem::size_of::<Reg>()) + reg as usize)
     }
@@ -1111,6 +1117,7 @@ impl TCU {
         )
     }
 
+    /// time(1)
     fn read_reg(idx: usize) -> Reg {
         // safety: we know that the address is within the MMIO region of the TCU
         unsafe { CPU::read8b((MMIO_ADDR.as_ptr::<Reg>()).add(idx)) }

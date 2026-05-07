@@ -30,6 +30,7 @@ use crate::com::Service;
 use crate::syscalls::{get_request, reply_success, send_reply};
 use crate::tiles::Activity;
 
+/// time(|some crd|·log|act obj_caps|)
 fn do_exchange(
     act1: &Rc<Activity>,
     act2: &Rc<Activity>,
@@ -82,6 +83,7 @@ fn do_exchange(
     Ok(())
 }
 
+/// time(|some crd|·log|some act obj_caps|)
 #[inline(never)]
 pub fn exchange(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::Exchange = get_request(msg)?;
@@ -103,6 +105,7 @@ pub fn exchange(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), Ve
     Ok(())
 }
 
+/// time(|some crd|·log|some act obj_caps| + async)
 #[inline(never)]
 pub fn exchange_over_sess_async(
     act: &Rc<Activity>,

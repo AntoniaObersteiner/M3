@@ -29,6 +29,7 @@ use crate::platform;
 use crate::syscalls::{get_request, reply_success, send_reply};
 use crate::tiles::{tilemng, Activity, TileMux, INVAL_ID};
 
+/// time(log|act obj_caps| + async)
 #[inline(never)]
 pub fn tile_quota_async(
     act: &Rc<Activity>,
@@ -86,6 +87,7 @@ pub fn tile_quota_async(
     Ok(())
 }
 
+/// time(log|act obj_caps| + async)
 #[inline(never)]
 pub fn tile_set_quota_async(
     act: &Rc<Activity>,
@@ -127,6 +129,7 @@ pub fn tile_set_quota_async(
     Ok(())
 }
 
+/// time(log|act obj_caps| + busy + (reply recv_ep buf_size or serial or 1 + busy) + async)
 #[inline(never)]
 pub fn tile_set_pmp(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::TileSetPMP = get_request(msg)?;
@@ -195,6 +198,10 @@ pub fn tile_set_pmp(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<()
     Ok(())
 }
 
+/// time(log|act obj_caps| + match mux_mem {
+///    None: async + PMEM_PROT_EPS·(reply recv_ep buf_size or serial or 1 + busy),
+///    Some: 1
+/// } + busy)
 #[inline(never)]
 pub fn tile_reset_async(
     act: &Rc<Activity>,
@@ -233,6 +240,7 @@ pub fn tile_reset_async(
     Ok(())
 }
 
+/// time(log|act.obj_caps| + async)
 #[inline(never)]
 pub fn tile_mux_info_async(
     act: &Rc<Activity>,
@@ -262,6 +270,7 @@ pub fn tile_mux_info_async(
     Ok(())
 }
 
+/// time(log|act.obj_caps|)
 #[inline(never)]
 pub fn tile_mem(act: &Rc<Activity>, msg: &'static tcu::Message) -> Result<(), VerboseError> {
     let r: syscalls::TileMem = get_request(msg)?;
