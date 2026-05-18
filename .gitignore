@@ -13,3 +13,4 @@
 /.rustup
 /build
 /run
+src/target/
