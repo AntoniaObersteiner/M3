@@ -7,6 +7,7 @@ members = [
     "apps/bench/mem",
     "apps/bench/netlat",
     "apps/bench/noopbench",
+    "apps/bench/meritbench",
     "apps/bench/rustbenchs",
     "apps/bench/rustnetbenchs",
     "apps/bench/voiceassist/vamic",
